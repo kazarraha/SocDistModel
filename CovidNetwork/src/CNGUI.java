@@ -16,6 +16,44 @@ import javax.swing.JButton;
 	import javax.swing.JPanel;
 	import javax.swing.JTextField;
 
+	/*
+	 
+		This project was written exclusively by Matthew J Young for research purposes.
+		It is not intended for or designed for general use, but if you want to copy and adapt it
+		for your own research, you may do so with proper credit/citation.
+	 
+		This simulates a population model with game theoretic agents with an SIS disease model
+		Agents attempt to maximize their utility which increases with socialization
+		but decreases with disease risk (which itself increases with socialization among more infected neighbors)
+
+
+		The CNGUI class runs the main method and sets things up, and the display window.
+		The CNSimulator class runs the actual disease and game theoretic components of the model model,
+		remembering the population states and updating them.
+		The ActionManager class contains static methods, each of which enacts a specific scenario of events,
+		which usually end up generating a figure at the end.
+
+		Almost all of the variables and methods are hard-coded, rather than having input fields when the code is run.
+		The set of events I want to occur are written step-by-step into an ActionManager method, then that method is
+		stuck into the ActionButton in MainGUI, and the old methods are commented out, so when the program is executed
+		pressing the Action Button will do the useful thing.  If you wish to run things yourself, find the relevant section
+		(search for "actionpaction"), set the corresponding boolean variable to TRUE and all others to FALSE,
+		and then run the program and press the action button.  Specific methods may need to be commented/uncommented
+
+		The paper based on this model is titled "Diversity in valuing social contact and 
+		risk tolerance leading to the emergence of homophily in populations facing infectious threats"
+		and was authored by Matthew J. Young, Matthew J. Silk, Alex J. Pritchard, and Nina H. Fefferman 
+		and published in Physical Review E.
+		It can be found at https://doi.org/10.1103/PhysRevE.105.044315
+		
+		
+		A network version of this model can be accessed by running the NetworkGUI method.
+
+	*/
+	
+	
+	
+	
 	public class CNGUI extends JPanel implements MouseListener {
 		//handles the main window and buttons
 		
@@ -33,8 +71,8 @@ import javax.swing.JButton;
     	boolean displayFour = true;
     	   	
     	
+    	//boolean displayHistoryMatrix = true;
     	boolean displayHistoryMatrix = true;
-    	//boolean displayHistoryMatrix = false;
 		
 		public JFrame simFrame;
 		public CNGUI myself;
@@ -56,7 +94,7 @@ import javax.swing.JButton;
 		
 		
 		
-		public static boolean networkMode = false;
+		public boolean networkMode = true;
 
 		
 	public static void main(String[] args){  //main
@@ -75,13 +113,17 @@ import javax.swing.JButton;
 			
 		}
 
-
-
 		public CNGUI() {
+			this(false);
+		}
+
+		public CNGUI(boolean nm) {
+			networkMode = nm;
 			myself = this;
 			addMouseListener(this);
 			
-			if(networkMode) sim = new NetworkSimulator();
+			
+			if(networkMode) sim = new NetworkSimulator(0);
 			else sim = new CNSimulator();
 			
 			makePseudoButtons();
@@ -145,7 +187,8 @@ import javax.swing.JButton;
 			  {
 				//insert actionbutton stuff here			
 				//ActionManager.graphPublicGoods();
-				  ActionManager.graphHomophily();
+				//ActionManager.graphHomophily();
+				ActionManager.actionPaction();
 				  
 				repaint();
 			  }
@@ -169,6 +212,7 @@ import javax.swing.JButton;
 	    public int clickPseudoButton(int x, int y) {
 	    	int psy = -1;
 	    	for(int i = 0; i < pseudoButtons.length; i++) {
+	    		if(pseudoButtons[i]==null) break;
 	    		if(pseudoButtons[i].inside(x, y)) psy = i;
 	    	}
 	    	return psy;
@@ -207,11 +251,11 @@ import javax.swing.JButton;
 	        int xLoc = 0;
 	        int yLoc = 100;
 	        
-        	int l = 1400; int h = 400;
+        	int l = 900; int h = 350;
 	        
-	        if(statusPaint) paintStatus(g2d, xLoc, yLoc);
+	        if(statusPaint && !networkMode) paintStatus(g2d, xLoc, yLoc);
 	        
-	        if(networkMode) paintAgentStatus(g2d, xLoc+20, yLoc+250);
+	        if(networkMode);// paintAgentStatus(g2d, xLoc+20, yLoc+250);
 	        else if(!displayHistoryMatrix){
 	        	if(!displayFour) {
 	        		if(psyIndex >=0 && psyIndex < sim.population.length) {
@@ -236,7 +280,7 @@ import javax.swing.JButton;
 	        	//change to allow 4 side-by-side
 	        	else paintMatrix(g2d, xLoc+20, yLoc+250);
 	        }
-	        else paintHistoryMatrix(g2d, xLoc+60,yLoc+250,1000,h);
+	        else paintHistoryMatrix(g2d, xLoc+60,yLoc+250,900,350);
 	
 		}
 		
@@ -314,6 +358,8 @@ import javax.swing.JButton;
 			}
 			g2d.drawLine(xLoc+width, yLoc, xLoc+width, yLoc+height);
 			g2d.drawLine(xLoc, yLoc+height, xLoc+width, yLoc+height);
+			
+			
 			
 		}
 		
@@ -423,10 +469,14 @@ import javax.swing.JButton;
 			
 			
 			g2d.setFont(smallFont);
+			
+			
+			
 		}
 		
 		public void paintHistoryMatrix(Graphics2D g2d, int xLoc, int yLoc, int length, int height) {
 			boolean includeInf = false;
+			boolean paintHomScores = true;
 			int[] indices = {0,1,4,5};
 			if(!sim.includeConf) {indices[2] = 2; indices[3]=3;}
 			int n = indices.length;
@@ -439,7 +489,15 @@ import javax.swing.JButton;
 					CNGraphHandler.paintFillGraph(g2d, xLocal, yLocal, sim.sjHistory[indices[i]][indices[j]], length/n, height/n, xLab, yLab);
 					if(includeInf)CNGraphHandler.paintLineGraph(g2d, xLocal, yLocal, sim.population[i].infHistory, length/n, height/n);
 				}
+				if(paintHomScores) {
+					double homScore = sim.getOneHomophily(i);
+					//g2d.drawString(""+homScore,xLoc+200+5*(30+length/n),yLoc+i*(30+height/n));
+					g2d.drawString("hom: "+homScore,1200,400+i*(30+height/n));
+				}
 			}		
+			
+
+			
 			
 		}
 

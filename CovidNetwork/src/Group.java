@@ -5,8 +5,8 @@ public class Group {
 	//settings
 	public boolean includeConf = false;
 	public boolean logMode = true;
-	//public boolean socialFriction = true; //partial homophily
-	public boolean socialFriction = false;
+	public boolean socialFriction = true; //partial homophily
+	//public boolean socialFriction = false;
 	
 	
 	
@@ -15,10 +15,11 @@ public class Group {
 	double socDecay = 1.0/2;
 	double socNormalizer = 1;
 	
+	public String name = "";	
 	
-	public double social;
-	public double conformity;
-	public double health;
+	public double socVal;
+	public double confVal;
+	public double healthVal;
 	
 	public double popSize;
 	public double infRate;
@@ -28,15 +29,15 @@ public class Group {
 	public ArrayList<Double> infHistory;
 	public ArrayList<Double> socHistory;
 	
-	//double incSoc = 0.001
-	double incSoc = 0.002;
+	double incSoc = 0.001;
+	//double incSoc = 0.002;
 	
 	
 	
 	public Group(double soc, double conf, double heal, double size, double inf) {
-		social = soc;
-		conformity = conf;
-		health = heal;
+		socVal = soc;
+		confVal = conf;
+		healthVal = heal;
 		
 		popSize = size;
 		infRate = inf;
@@ -45,6 +46,12 @@ public class Group {
 		socHistory = new ArrayList<Double>();
 		
 		
+	}
+	
+	public void redoParameters(double soc, double conf, double heal) {
+		socVal = soc;
+		confVal = conf;
+		healthVal = heal;
 	}
 	
 	
@@ -76,13 +83,6 @@ public class Group {
 		//derivative = socVal * 1/(2sqrt(totalsocial) - healthVal * (infection rate of target group)
 		
 		//DIAGNOSTIC
-		double baseSoc = 1;
-		double bonusSoc = 4;
-		double socVal = baseSoc + bonusSoc*social;
-		
-		double baseHealth = 10;
-		double bonusHealth = 10;
-		double healthVal = baseHealth + bonusHealth*health;
 		
 		int[] oldChange = new int[sim.population.length];
 		double[] partTwo = new double[sim.population.length];
@@ -168,18 +168,7 @@ public class Group {
 		
 		//diagnostic is temp variable so it only prints on certain groups
 		
-		double baseSoc = 4;
-		double bonusSoc = 8;
-		double socVal = baseSoc + bonusSoc*social;
-		
-		double baseHealth = 30;
-		double bonusHealth = 30;
-		double healthVal = baseHealth + bonusHealth*health;
-		
-		double baseConformity = 0.3;
-		double bonusConformity = 1;
-		double confVal = baseConformity + bonusConformity*conformity;
-		
+
 		
 
 		
@@ -239,6 +228,13 @@ public class Group {
 		socHistory.add(rememberSoc);
 	}
 	
+	public void setName(int soc, int health) {
+		name = "";
+		if(soc > 0) name+= "SO";
+		else name += "AS";
+		if(health > 0) name += "RA";
+		else name += "RT";
+	}
 	
 	
 }

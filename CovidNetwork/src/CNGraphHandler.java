@@ -66,7 +66,7 @@ public class CNGraphHandler extends JPanel {
 		 int top = 100;
 		 int left = 100;
 		 int height = 800;
-		 int length = 1000;
+		 int length = 1001;
 		 
 		 
 		 boolean whitebackground = true;
@@ -97,7 +97,7 @@ public class CNGraphHandler extends JPanel {
 		 int yTicInterval = (int)(yInc);
 		 if(yInc > height) yTicInterval = (int)(yInc/100);
 		 int ticLength = 2;
-		 if(xTicInterval<=0) System.out.println("xTicInterval <= 0 in GraphHandler.paint");
+		 if(xTicInterval<=0) System.out.println("xTicInterval <= 0 in CNGraphHandler.paint");
 		 for(int xTicSpot = left; xTicSpot <= left+length; xTicSpot += xTicInterval){
 			 g2d.drawLine(xTicSpot, top + height, xTicSpot, top + height - ticLength);
 		 }
@@ -156,8 +156,8 @@ public class CNGraphHandler extends JPanel {
 	public static void paintFillGraph(Graphics2D g2d, int xLoc, int yLoc, ArrayList<Double> data, int length, int height, boolean xLab, boolean yLab) {
 		//TODO, change more parameters to be passed in to make this general
 		
-		//double[] ySocBounds = {0,2,4}; double ySocMax = ySocBounds[ySocBounds.length-1]; double ySocMin = ySocBounds[0];
-		double[] ySocBounds = {0,4,8}; double ySocMax = ySocBounds[ySocBounds.length-1]; double ySocMin = ySocBounds[0];
+		double[] ySocBounds = {0,2,4}; double ySocMax = ySocBounds[ySocBounds.length-1]; double ySocMin = ySocBounds[0];
+		//double[] ySocBounds = {0,4,8}; double ySocMax = ySocBounds[ySocBounds.length-1]; double ySocMin = ySocBounds[0];
 		double[] xBounds = {0,1250,2500}; double xMax = xBounds[xBounds.length-1]; double xMin = xBounds[0];
 		int timeMax = (int)xMax;
 		int numT = 1000;

@@ -22,9 +22,11 @@ public class CNSimulator {
 	//public double homophily = 1;
 	
 	public double recoveryRate = 0.3;
-	public double infRate = 0.1; //initial infection
+	public double infRate = 0.1; //initial infectionf
 	
 	public double transmission = 1.0/8; //rate of disease spread
+	
+	public double highestPInf = 0;
 	
 	public int numDays;
 	
@@ -46,13 +48,28 @@ public class CNSimulator {
 		double[] freqs = {highSocialFreq, highConformityFreq, highHealthFreq, initialInfected};
 		
 		int groupIndex = 0;
+		
+		double baseSoc = 4;
+		double bonusSoc = 8;
+
+		double baseHealth = 30;
+		double bonusHealth = 30;
+		
+		double baseConformity = 0.3; //not currently used in any figures or tests
+		double bonusConformity = 1;
+		
+		
 		for(int soc = 0; soc <= 1; soc++) {
+			double socVal = baseSoc + bonusSoc*soc;
 			int maxConf = 1;  if(!includeConf) maxConf = 0;
 			for(int conf = 0; conf <= maxConf; conf++) {
-				for(int health = 0; health <= 1; health++) {			
+				double confVal = baseConformity + bonusConformity*conf;
+				for(int health = 1; health >= 0; health--) {
+						double healthVal = baseHealth + bonusHealth*health;
 						double popSize = highSocialFreq * highConformityFreq * highHealthFreq;
-						population[groupIndex] = new Group(soc,conf,health, popSize, initialInfected);
-								
+						population[groupIndex] = new Group(socVal,confVal,healthVal, popSize, initialInfected);
+						population[groupIndex].setName(soc, health);
+						
 						if(!includeConf) population[groupIndex].includeConf = false;
 						groupIndex++;
 					
@@ -141,21 +158,40 @@ public class CNSimulator {
 		//double avgInf = getAverageInf();
 		for(int i = 0; i < population.length; i++) {
 			double sumInt = 0;
+			double sumNewInf = 0;
 			for(int j = 0; j < population.length; j++) {
 				//double soc = getSoc(population[i], population[j], avgInf);
 				double soc = Math.min(socialDesires[i][j], socialDesires[j][i]);
 				double interact = soc;// * interactionCoeff[i][j];
 				sumInt += interact;
 				double newInf = uninf[i] * population[j].infRate * interact * transmission * timeScale;
-				uninf[i] -= newInf;
-				
+				//uninf[i] -= newInf;
+				sumNewInf += newInf;
+				//if(uninf[i] < 0) {
+				//	System.out.println("infection probability exceeded 1.  This is bad, figure out where.");
+				//	uninf[i] = 0;
+				//}
 			}
+			checkHighestInf(sumNewInf/uninf[i]);
+			if(sumNewInf > uninf[i]) {
+				uninf[i] = 0;
+			}
+			else uninf[i] -= sumNewInf;
 			uninf[i] += population[i].infRate * recoveryRate * timeScale;
 			population[i].rememberSoc = sumInt;
+			
+			//safety checker
+			boolean safety = false;
+			if(safety && sumInt * transmission * timeScale > 1) {
+				System.out.println("infection probability would exceed 1 given high infRate. i:" + i + "sumInt: " + sumInt);
+				System.out.println("sigma: " + population[i].socVal + " rho(1-gam): " + population[i].healthVal * (1-recoveryRate*timeScale));
+			}
+			
 			
 		}
 		for(int i = 0; i < uninf.length; i++) {
 			population[i].infRate = 1 - uninf[i];
+			
 		}
 		
 		//update
@@ -188,6 +224,8 @@ public class CNSimulator {
 			g.maxSocBonus = m;
 			g.socDecay = r;
 			g.socNormalizer = n;
+			g.socialFriction = true;
+			
 		}
 	}
 	
@@ -207,6 +245,19 @@ public class CNSimulator {
 		return sumHom;
 	}
 	
+	public double getOneHomophily(int i) {
+		double sumSoc = 0;
+		double selfSoc = 0;
+		for(int j = 0; j < population.length; j++) {
+			double soc = Math.min(socialDesires[i][j], socialDesires[j][i]);
+			sumSoc += soc;
+			if(i == j) selfSoc = soc;				
+		}
+		double homScore = selfSoc/sumSoc;
+		return homScore;
+	}
+	
+	
 	public double getEIHomScore() {
 		//original EI score in the literature is (E-I)/(E+I)
 		//our modified one averages E from other groups, and then negates, so 0 treats all groups the same, 1 is perfect homophily
@@ -219,12 +270,20 @@ public class CNSimulator {
 				if(i==j) I = soc;
 				else E += soc/(population.length-1);				
 			}
+			//System.out.println("I: " + I + "  E: " + E);
+			
 			double homScore = (I-E)/(I+E); //modified EI homophily
 			sumHom += homScore/population.length; //average over all groups
 		}
 		return sumHom;
 		
 		
+	}
+	
+	public double checkHighestInf(double inf) { //check to see if p(inf) exceeds or approaches 1
+		if(inf > 1 && highestPInf <= 1) System.out.println("infection probability exceeded 1.  This is bad, figure out where.");
+		if(inf > highestPInf) highestPInf = inf;
+		return highestPInf;		
 	}
 	
 	
